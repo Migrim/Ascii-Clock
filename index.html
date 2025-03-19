@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCII Clock</title>
+<style>
+body { margin: 0; overflow: hidden; background-color: #000; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="clockCanvas"></canvas>
+<script>
+let canvas = document.getElementById("clockCanvas");
+let ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+let particles = [];
+let cellWidth = 20;
+let cellHeight = 30;
+let lastTimeStr = "";
+let spring = 0.1;
+let damping = 0.9;
+let digitPatterns = {
+"0": [" ### ","#   #","#   #","#   #"," ### "],
+"1": ["  #  "," ##  ","  #  ","  #  "," ### "],
+"2": [" ### ","#   #","   # ","  #  ","#####"],
+"3": [" ### ","    #","  ## ","    #"," ### "],
+"4": ["#   #","#   #","#####","    #","    #"],
+"5": ["#####","#    ","#### ","    #","#### "],
+"6": [" ### ","#    ","#### ","#   #"," ### "],
+"7": ["#####","    #","   # ","  #  "," #   "],
+"8": [" ### ","#   #"," ### ","#   #"," ### "],
+"9": [" ### ","#   #"," ####","    #"," ### "],
+":": ["     ","  #  ","     ","  #  ","     "]
+};
+function getTimeStr() {
+  let now = new Date();
+  let h = now.getHours().toString().padStart(2,"0");
+  let m = now.getMinutes().toString().padStart(2,"0");
+  let s = now.getSeconds().toString().padStart(2,"0");
+  return h + ":" + m + ":" + s;
+}
+function computeTargetPositions(timeStr) {
+  let positions = [];
+  let totalDigits = timeStr.length;
+  let patternWidth = 5;
+  let patternHeight = 5;
+  let spacing = cellWidth;
+  let totalWidth = totalDigits * patternWidth * cellWidth + (totalDigits - 1) * spacing;
+  let startX = (canvas.width - totalWidth) / 2;
+  let startY = (canvas.height - patternHeight * cellHeight) / 2;
+  for (let i = 0; i < timeStr.length; i++) {
+    let char = timeStr[i];
+    let pattern = digitPatterns[char];
+    for (let row = 0; row < pattern.length; row++) {
+      for (let col = 0; col < pattern[row].length; col++) {
+        if (pattern[row][col] !== " ") {
+          let x = startX + i * (patternWidth * cellWidth + spacing) + col * cellWidth;
+          let y = startY + row * cellHeight;
+          positions.push({ x: x, y: y, char: char });
+        }
+      }
+    }
+  }
+  return positions;
+}
+function updateParticles() {
+  let timeStr = getTimeStr();
+  if (timeStr !== lastTimeStr) {
+    let targets = computeTargetPositions(timeStr);
+    let len = targets.length;
+    if (particles.length < len) {
+      for (let i = particles.length; i < len; i++) {
+        particles.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: 0, vy: 0, targetX: targets[i].x, targetY: targets[i].y, char: targets[i].char });
+      }
+    } else if (particles.length > len) {
+      particles.splice(len);
+    }
+    for (let i = 0; i < len; i++) {
+      particles[i].targetX = targets[i].x;
+      particles[i].targetY = targets[i].y;
+      particles[i].char = targets[i].char;
+    }
+    lastTimeStr = timeStr;
+  }
+}
+function update() {
+  updateParticles();
+  for (let p of particles) {
+    p.vx += (p.targetX - p.x) * spring;
+    p.vy += (p.targetY - p.y) * spring;
+    p.vx *= damping;
+    p.vy *= damping;
+    p.x += p.vx;
+    p.y += p.vy;
+  }
+}
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#0f0";
+  ctx.font = cellHeight + "px monospace";
+  for (let p of particles) {
+    ctx.fillText(p.char, p.x, p.y);
+  }
+}
+function animate() {
+  update();
+  draw();
+  requestAnimationFrame(animate);
+}
+animate();
+window.addEventListener("resize", function(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
