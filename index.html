@@ -27,6 +27,7 @@ let cellHeight = 30;
 let lastTimeStr = "";
 let spring = 0.1;
 let damping = 0.85;
+let showSeconds = true;
 let digitPatterns = {
 "0": [" ### ","#   #","#   #","#   #"," ### "],
 "1": ["  #  "," ##  ","  #  ","  #  "," ### "],
@@ -45,7 +46,7 @@ function getTimeStr() {
   let h = now.getHours().toString().padStart(2,"0");
   let m = now.getMinutes().toString().padStart(2,"0");
   let s = now.getSeconds().toString().padStart(2,"0");
-  return h + ":" + m + ":" + s;
+  return showSeconds ? h + ":" + m + ":" + s : h + ":" + m;
 }
 function computeTargetPositions(timeStr) {
   let positions = [];
@@ -104,7 +105,7 @@ function update() {
 }
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = isWhiteMode ? "#9370DB" : "#9370DB";
+  ctx.fillStyle = "#9370DB";
   ctx.font = cellHeight + "px 'Courier New', monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -123,6 +124,9 @@ function draw() {
     ctx.fillText(p.char, 0, 0);
     ctx.restore();
   }
+  ctx.fillStyle = isWhiteMode ? "#000" : "#fff";
+  ctx.font = "16px sans-serif";
+  ctx.fillText("Press S to toggle seconds, W to toggle light/dark", canvas.width/2, canvas.height - 20);
 }
 function animate() {
   update();
@@ -142,6 +146,9 @@ window.addEventListener("resize", function(){
 window.addEventListener("keydown", function(e) {
   if (e.key.toLowerCase() === "w") {
     isWhiteMode = !isWhiteMode;
+  } else if (e.key.toLowerCase() === "s") {
+    showSeconds = !showSeconds;
+    lastTimeStr = ""; 
   }
 });
 </script>
